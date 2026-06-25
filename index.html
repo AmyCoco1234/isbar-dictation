@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ISBAR Dictation Practice</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f9fb;
+      margin: 0;
+      padding: 20px;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .notice {
+      background: #eef6ff;
+      border-left: 5px solid #2563eb;
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    button {
+      border: none;
+      padding: 12px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+    }
+
+    .start {
+      background: #2563eb;
+      color: white;
+    }
+
+    .stop {
+      background: #dc2626;
+      color: white;
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 260px;
+      padding: 14px;
+      font-size: 16px;
+      line-height: 1.5;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    .status {
+      font-weight: bold;
+      margin: 12px 0;
+    }
+
+    .small {
+      color: #6b7280;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .prompt {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 18px;
+    }
+
+    ul {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>ISBAR Dictation Practice</h1>
+
+    <div class="notice">
+      <strong>Private practice:</strong> This page does not save or submit your response.
+      Use the transcript to compare your handover with the exemplar answer in Rise.
+    </div>
+
+    <div class="prompt">
+      <strong>Structure your handover using ISBAR:</strong>
+      <ul>
+        <li><strong>I</strong> — Identify yourself and the patient</li>
+        <li><strong>S</strong> — Situation</li>
+        <li><strong>B</strong> — Background</li>
+        <li><strong>A</strong> — Assessment</li>
+        <li><strong>R</strong> — Recommendation</li>
+      </ul>
+    </div>
+
+    <div class="buttons">
+      <button id="startBtn" class="start">Start dictation</button>
+      <button id="stopBtn" class="stop" disabled>Stop dictation</button>
+      <button id="copyBtn" class="secondary">Copy transcript</button>
+      <button id="clearBtn" class="secondary">Clear</button>
+    </div>
+
+    <div id="status" class="status">Ready.</div>
+
+    <textarea id="transcript" placeholder="Your spoken handover will appear here..."></textarea>
+
+    <p class="small">
+      Works best in Chrome or Edge. Browser dictation may mishear clinical terms, names, numbers, or abbreviations.
+    </p>
+  </div>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const copyBtn = document.getElementById("copyBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const statusText = document.getElementById("status");
+    const transcriptBox = document.getElementById("transcript");
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    let recognition;
+    let finalTranscript = "";
+
+    if (!SpeechRecognition) {
+      statusText.textContent = "Dictation is not supported in this browser. Please use Chrome or Edge.";
+      startBtn.disabled = true;
+    } else {
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-AU";
+
+      recognition.onresult = function(event) {
+        let interimTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const text = event.results[i][0].transcript;
+
+          if (event.results[i].isFinal) {
+            finalTranscript += text + " ";
+          } else {
+            interimTranscript += text;
+          }
+        }
+
+        transcriptBox.value = finalTranscript + interimTranscript;
+      };
+
+      recognition.onerror = function(event) {
+        statusText.textContent = "Dictation error: " + event.error;
+      };
+
+      recognition.onend = function() {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        if (statusText.textContent === "Listening...") {
+          statusText.textContent = "Dictation stopped.";
+        }
+      };
+    }
+
+    startBtn.addEventListener("click", function() {
+      if (!recognition) return;
+
+      finalTranscript = transcriptBox.value ? transcriptBox.value + " " : "";
+
+      recognition.start();
+
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      statusText.textContent = "Listening...";
+    });
+
+    stopBtn.addEventListener("click", function() {
+      if (recognition) {
+        recognition.stop();
+      }
+
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      statusText.textContent = "Dictation stopped.";
+    });
+
+    copyBtn.addEventListener("click", async function() {
+      try {
+        await navigator.clipboard.writeText(transcriptBox.value);
+        statusText.textContent = "Transcript copied.";
+      } catch (error) {
+        statusText.textContent = "Could not copy. Please select the text and copy manually.";
+      }
+    });
+
+    clearBtn.addEventListener("click", function() {
+      finalTranscript = "";
+      transcriptBox.value = "";
+      statusText.textContent = "Transcript cleared.";
+    });
+  </script>
+</body>
+</html>
