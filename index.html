@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ISBAR Dictation Practice</title>
+  <title>Practise Your ISBAR Handover</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
@@ -130,15 +130,15 @@
     </div>
 
     <div class="buttons">
-      <button id="startBtn" class="start">Start dictation</button>
-      <button id="stopBtn" class="stop" disabled>Stop dictation</button>
-      <button id="copyBtn" class="secondary">Copy transcript</button>
-      <button id="clearBtn" class="secondary">Clear</button>
+      <button id="startBtn" class="start">Start speaking</button>
+      <button id="stopBtn" class="stop" disabled>Finish speaking</button>
+      <button id="copyBtn" class="secondary">Copy my transcript</button>
+      <button id="clearBtn" class="secondary">Clear transcript</button>
     </div>
 
-    <div id="status" class="status">Ready.</div>
+    <div id="status" class="status">Ready to begin.</div>
 
-    <textarea id="transcript" placeholder="Your spoken handover will appear here..."></textarea>
+    <textarea id="transcript" placeholder="Your spoken ISBAR handover will appear here..."></textarea>
 
     <p class="small">
       Works best in Chrome or Edge. Browser dictation may mishear clinical terms, names, numbers, or abbreviations.
@@ -190,9 +190,9 @@
       recognition.onend = function() {
         startBtn.disabled = false;
         stopBtn.disabled = true;
-        if (statusText.textContent === "Listening...") {
-          statusText.textContent = "Dictation stopped.";
-        }
+        if (statusText.textContent === "Listening... Speak your ISBAR handover.") {
+    statusText.textContent = "Finished. Review your transcript below.";
+}
       };
     }
 
@@ -205,7 +205,7 @@
 
       startBtn.disabled = true;
       stopBtn.disabled = false;
-      statusText.textContent = "Listening...";
+      statusText.textContent = "Listening... Speak your ISBAR handover.";
     });
 
     stopBtn.addEventListener("click", function() {
